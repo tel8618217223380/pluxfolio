@@ -1,0 +1,88 @@
+
+
+### Внимание ###
+Принеденные ниже инструкции на данный момент не были проверены на практике. Используйте их на свой страх и риск. Обязательно делайте резервные копии перед какими-либо важными изменениями.
+
+## Проверка свежести картинок (версия 0.24.1 и ниже) ##
+  1. Откройте для редактирования файл **parametres\_affichage.php** в папке core/admin
+    * Надите строку `$arr_index[$key] = $val['name'];` и добавьте после нее следующий код:
+```
+$freshtime[604800] = '1 неделя';
+$freshtime[1296000] = '15 дней';
+$freshtime[2592000] = '1 месяц';
+$yesno[0] = 'Нет';
+$yesno[1] = 'Да';
+```
+    * Найдите строку `<?php plxUtils::printSelect('tri', $aTri, $plxAdmin->aConf['tri']); ?>` и добавьте после нее следующий код:
+```
+<p class="field"><label>Включить проверку свежести картинок?</label></p>
+<?php plxUtils::printSelect('freshness', $yesno, $plxAdmin->aConf['freshness']); ?>
+<?php if ($plxAdmin->aConf['freshness']==1) { ?>
+<p class="field"><label>Время свежести картинки:</label></p>
+<?php plxUtils::printSelect('freshnesstime', $freshtime, $plxAdmin->aConf['freshnesstime']); ?>
+<?php }; ?>
+```
+    * Сохраните изменения
+  1. Откройте для редактирования файл **galeria.php**, находящийся в папке вашей текущей темы оформления (themes/ваша`_`тема/galeria.php)
+    * Найдите строку
+**Для версий старше 0.21**
+
+`$images .= "<div class=\"framer ".$file0."\"><a class=\"galimage\" style=\"background:url(".$full_server.$thumb.") no-repeat center; width:".$thumb_width."px; height:".$thumb_height."px;".$opacity."\"  href=\"".$files_path.$album.$file_name.$file_ext."\" ".$rel." title=\"".$file_description."\"></a>".$filename."</div>\n";`
+
+**Для версии 0.21**
+
+`$images .= "<div class=\"framer ".$file_name."\"><a class=\"galimage\" style=\"background:url(".$full_server.$thumb.") no-repeat center; width:".$thumb_width."px; height:".$thumb_height."px;".$opacity."\"  href=\"".$files_path.$album.$file."\" rel=\"lightbox\" title=\"".$file_name."\"></a>".$file_name."</div>\n";`
+
+> и полностью замените её следующим кодом:
+
+**Для версий старше 0.21**
+```
+if ($plxShow->plxMotor->freshness==1) {
+$fresh_label = '';
+$currentdate = date("U");
+$filedate = date ("U ", filemtime($files_path.$album.$file_name.$file_ext));
+if ($filedate >= $currentdate-$plxShow->plxMotor->freshnesstime) $fresh_label = '<div class="freshlabel"></div>';
+}
+
+$images .= "<div class=\"framer ".$file0."\">".$fresh_label."<a class=\"galimage\" style=\"background:url(".$full_server.$thumb.") no-repeat center; width:".$thumb_width."px; height:".$thumb_height."px;".$opacity."\"  href=\"".$files_path.$album.$file_name.$file_ext."\" ".$rel." title=\"".$file_description."\"></a>".$filename."</div>\n";
+```
+
+**Для версии 0.21**
+```
+if ($plxShow->plxMotor->freshness==1) {
+$fresh_label = '';
+$currentdate = date("U");
+$filedate = date ("U ", filemtime($files_path.$album.$file_name.$file_ext));
+if ($filedate >= $currentdate-$plxShow->plxMotor->freshnesstime) $fresh_label = '<div class="freshlabel"></div>';
+}
+
+$images .= "<div class=\"framer ".$file_name."\">".$fresh_label."<a class=\"galimage\" style=\"background:url(".$full_server.$thumb.") no-repeat center; width:".$thumb_width."px; height:".$thumb_height."px;".$opacity."\"  href=\"".$files_path.$album.$file."\" rel=\"lightbox\" title=\"".$file_name."\"></a>".$file_name."</div>\n";
+```
+
+  * Сохраните изменения
+  1. Откройте для редактированя файл **style.css** вашей темы оформления (в той же папке, что и galeria.php) и добавьте в самый конец строку:
+```
+div.freshlabel {width: 80px; height: 60px; background: transparent url('img/new.png') no-repeat; position: absolute; z-index: 15; right: 0; top: 0;}
+```
+  1. Создайте картинку 80x60px с текстом и эффектами. Данная картинка будет отображаться поверх свежих работ в галерее.
+  1. Поместите её в папку img (при необходимости создайте её), находящуюся в папке с вашей темой оформления.
+  1. Откройте для редактирования файл **class.plx.motor.php**, находящийся в папке core/lib/
+    * Найдите строку `$this->tri = $this->aConf['tri'];` и добавьте после неё следующий код:
+```
+$this->freshness = $this->aConf['freshness'];
+$this->freshnesstime = $this->aConf['freshnesstime'];
+```
+    * Сохраните изменения
+  1. Войдите в администраторскую панель вашего сайта и передите в разде "Настройки" -> "Настройки контента".
+    * В выпадающем меню "Включить проверку свежести картинок?" выберите "Да".
+    * В выпадающем меню "Время свежести картинки:" выберите необходимый период времени.
+    * Сохраните изменения
+Если все прошло успешно, то над картинками, которые были загружены на сайт не ранее указаного вами промежутка времени, появится картинка, которую вы создали на шаге 4.
+
+## Создание индивидуальных миниатюр (версия 0.61 и ниже) ##
+  1. Загрузите архив с системой версии 0.7
+  1. Замените c перезаписью папки /core/admin/**img** и **/js**, а также файлы /core/admin/**crop.php**, /core/admin/**jquery.Jcrop.css** и /core/admin/**images.php**
+
+## Многофайловая загрузка изображений (версия 0.8 и ниже) ##
+## Визуальный редактор в полях новостей, галерей и статических страниц (версия 0.95 и ниже) ##
+  * Загрузите [файлы обновления](http://code.google.com/p/pluxfolio/downloads/detail?name=pluxfolio-niceedit.zip) и замените необходимые файлы системы.
